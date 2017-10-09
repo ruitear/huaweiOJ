@@ -26,6 +26,35 @@ typedef struct{
 	unsigned int point;
 }CardInfo;
 
+class libStype
+{
+private:
+	int pointSum;
+	int pointMax;
+	vector<CardInfo>vecType;
+public:
+	libStype(){ pointSum = 0; pointMax = 0; }
+	libStype(int ssize, int pmax) :pointSum(ssize), pointMax(pmax){}
+	void setMax()
+	{
+		pointMax = (pointMax<pointSum) ? pointSum : pointMax ;
+	}
+	void setPoint(int point)
+	{
+		pointSum += point;
+	}
+	int getMax()
+	{
+		return pointMax;
+	}
+	void clear()
+	{
+		pointSum = 0;
+		pointMax = 0;
+		vecType.clear();
+	}
+};
+
 void fillTypeAndInt(map<CardType, vector<CardInfo>>& typeNum, map<int, vector<CardInfo>>& typeInt, CardInfo InCards[7])
 {//typeNum保存一花色分别保存的情况，typeInt保存一点数分别保存的类型，
 	map<CardType, vector<CardInfo>>::iterator ittOfTypeNum;
@@ -53,17 +82,8 @@ void fillTypeAndInt(map<CardType, vector<CardInfo>>& typeNum, map<int, vector<Ca
 		}
 	}
 }
-struct resType{
-	bool isOK;
-	int sum;
-	CardsCombinationType resultType;
-	void setNum(bool flg, int ssum){ isOK = flg; sum = ssum; }
-	void setRes(CardsCombinationType& temp)
-	{
-		resultType = temp;
-	}
-};
 
+libStype globalType;
 //看是否为同花，为同花的话就讲结果保存在result，isOK为TRUE
 int isSameType(map<CardType, vector<CardInfo>>& typeNum)
 {
@@ -73,6 +93,11 @@ int isSameType(map<CardType, vector<CardInfo>>& typeNum)
 	{
 		if (itt->second.size()>=5)
 		{
+			for (size_t i = 0; i < itt->second.size(); i++)
+			{
+				globalType.setPoint(itt->second[i].point);
+			}
+			globalType.setMax();
 			return itt->first;
 		}
 		itt++;
@@ -93,7 +118,14 @@ int isFlush(map<int, vector<CardInfo>>& reault)
 	{
 		ittn = reault.end()--;
 		flag = ittb->first - ittn->first;
-		return flag == 1 ? 1 : -1;
+		if (flag == 5)
+		{
+			int sumTemp = (ittb->first + ittn->first) * 5 / 2;
+			globalType.setPoint(sumTemp);
+			globalType.setMax();
+			return 1;
+		}
+		//return  -1;
 	}
 	ittb = reault.begin();
 	if (reault.size() == 6)
@@ -104,12 +136,15 @@ int isFlush(map<int, vector<CardInfo>>& reault)
 		{
 			ittn--;
 			flag = ittb->first - ittn->first;
-			if (flag==1)
+			if (flag==5)
 			{
-				return flag;//flag==1,表示是顺子
+				int sumTemp = (ittb->first + ittn->first) * 5 / 2;
+				globalType.setPoint(sumTemp);
+				globalType.setMax();
+				return 1;//flag==1,表示是顺子
 			}
 		}
-		return -1;//表示不是顺子
+		//return -1;//表示不是顺子
 	}
 	ittb = reault.begin();
 	if (reault.size() == 7)
@@ -120,12 +155,15 @@ int isFlush(map<int, vector<CardInfo>>& reault)
 		{
 			ittn--;
 			flag = ittb->first - ittn->first;//首先让第三个跟第七个之间的5个数比较，看是不是连续的顺子
-			if (flag == 1)
+			if (flag == 5)
 			{
-				return flag;//flag==1,表示是顺子
+				int sumTemp = (ittb->first + ittn->first) * 5 / 2;
+				globalType.setPoint(sumTemp);
+				globalType.setMax();
+				return 1;//flag==1,表示是顺子
 			}
 		}
-		return -1;//表示不是顺子
+		//return -1;//表示不是顺子
 	}
 	return -1;
 }
@@ -142,36 +180,45 @@ int isPOYAL_FLUSH(vector<CardInfo>& typeVec)
 	{
 		if (*itt==10)
 		{
+			int sumTemp = (10 + 13) * 4 / 2+1;
+			globalType.setPoint(sumTemp);
+			globalType.setMax();
 			return 1;
 		}
-		else
+		/*else
 		{
 			return -1;
-		}
+		}*/
 	}
 	itt++;
 	if (newSet.size() == 6)
 	{
 		if (*itt == 10)
 		{
+			int sumTemp = (10 + 13) * 4 / 2 + 1;
+			globalType.setPoint(sumTemp);
+			globalType.setMax();
 			return 1;
 		}
-		else
+		/*else
 		{
 			return -1;
-		}
+		}*/
 	}
 	itt++;
 	if (newSet.size() == 7)
 	{
 		if (*itt == 10)
 		{
+			int sumTemp = (10 + 13) * 4 / 2 + 1;
+			globalType.setPoint(sumTemp);
+			globalType.setMax();
 			return 1;
 		}
-		else
+		/*else
 		{
 			return -1;
-		}
+		}*/
 	}
 	return -1;
 }
@@ -292,4 +339,6 @@ void GetMaxCards(CardInfo InCards[7], unsigned int* TotalPoints, CardsCombinatio
 	map<int, vector<CardInfo>> typeInt;
 	fillTypeAndInt(typeNum, typeInt, InCards);
 	*CardsCombType=getMaxType(typeNum, typeInt);
+	*TotalPoints = globalType.getMax();
+	globalType.clear();
 }
